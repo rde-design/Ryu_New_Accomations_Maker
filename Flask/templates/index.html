@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>All Students</h2>
+
+{% if students %}
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Grade</th>
+            <th>Classes</th>
+            <th>Accommodations</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr>
+            <td>{{ student.student_name }}</td>
+            <td>Grade {{ student.grade }}</td>
+            <td>{{ student.classes if student.classes else 'No classes' }}</td>
+            <td>{{ student.accommodations if student.accommodations else 'None' }}</td>
+            <td>
+                <a href="/view_student/{{ student.student_id }}" class="btn" style="padding: 5px 10px; font-size: 12px;">View</a>
+                <a href="/delete_student/{{ student.student_id }}" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('Are you sure?')">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No students in the database. <a href="/add_student">Add the first student!</a></p>
+{% endif %}
+{% endblock %}

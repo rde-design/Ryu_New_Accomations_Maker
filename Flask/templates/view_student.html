@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ student.student_name }}</h2>
+<p><strong>Grade:</strong> {{ student.grade }}</p>
+
+<h3 style="margin-top: 30px; color: #667eea;">Classes</h3>
+{% if classes %}
+<table>
+    <thead>
+        <tr>
+            <th>Class Name</th>
+            <th>Code</th>
+            <th>Subject Area</th>
+            <th>Level</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for class in classes %}
+        <tr>
+            <td>{{ class.class_name }}</td>
+            <td>{{ class.class_code }}</td>
+            <td>{{ class.subject_area }}</td>
+            <td>{{ class.level }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No classes enrolled.</p>
+{% endif %}
+
+<h3 style="margin-top: 30px; color: #667eea;">Accommodations</h3>
+{% if accommodations %}
+<table>
+    <thead>
+        <tr>
+            <th>Accommodation</th>
+            <th>Description</th>
+            <th>Time Multiplier</th>
+            <th>Separate Room</th>
+            <th>Start Date</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for acc in accommodations %}
+        <tr>
+            <td>{{ acc.accommodation_name }}</td>
+            <td>{{ acc.description }}</td>
+            <td>{{ acc.time_multiplier }}x</td>
+            <td>{{ 'Yes' if acc.requires_separate_room else 'No' }}</td>
+            <td>{{ acc.start_date }}</td>
+            <td>{{ acc.notes if acc.notes else '-' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No accommodations assigned.</p>
+{% endif %}
+
+<div style="margin-top: 30px;">
+    <a href="/" class="btn">Back to Home</a>
+</div>
+{% endblock %}
