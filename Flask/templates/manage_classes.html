@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Manage Classes</h2>
+
+<form method="POST" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+    <h3 style="margin-bottom: 20px;">Add New Class</h3>
+    
+    <div class="form-group">
+        <label for="class_name">Class Name *</label>
+        <input type="text" id="class_name" name="class_name" required placeholder="e.g., Physics">
+    </div>
+
+    <div class="form-group">
+        <label for="class_code">Class Code</label>
+        <input type="text" id="class_code" name="class_code" placeholder="e.g., PHY">
+    </div>
+
+    <div class="form-group">
+        <label for="subject_area">Subject Area *</label>
+        <input type="text" id="subject_area" name="subject_area" required placeholder="e.g., Science">
+    </div>
+
+    <button type="submit" class="btn">Add Class</button>
+</form>
+
+<h3>Current Classes</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Class Name</th>
+            <th>Code</th>
+            <th>Subject Area</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for class in classes %}
+        <tr>
+            <td>{{ class.class_name }}</td>
+            <td>{{ class.class_code }}</td>
+            <td>{{ class.subject_area }}</td>
+            <td>
+                <a href="/delete_class/{{ class.class_id }}" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('Are you sure?')">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

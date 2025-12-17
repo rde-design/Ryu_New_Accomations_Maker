@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Add New Test</h2>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="test_date">Test Date *</label>
+        <input type="date" id="test_date" name="test_date" required>
+    </div>
+
+    <div class="form-group">
+        <label for="period">Period *</label>
+        <select id="period" name="period" required>
+            <option value="">Select Period</option>
+            <option value="1st">1st Period</option>
+            <option value="2nd">2nd Period</option>
+            <option value="3rd">3rd Period</option>
+            <option value="4th">4th Period</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="class_id">Class *</label>
+        <select id="class_id" name="class_id" required>
+            <option value="">Select Class</option>
+            {% for class in classes %}
+            <option value="{{ class.class_id }}">{{ class.class_name }} ({{ class.class_code }})</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="test_name">Test Name</label>
+        <input type="text" id="test_name" name="test_name" placeholder="e.g., Unit 3 Test, Midterm">
+    </div>
+
+    <div class="form-group">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" rows="3" placeholder="Additional notes about the test..."></textarea>
+    </div>
+
+    <button type="submit" class="btn">Add Test</button>
+    <a href="/calendar" class="btn" style="background: #6c757d;">Cancel</a>
+</form>
+{% endblock %}

@@ -21,15 +21,32 @@
     </div>
 
     <div class="form-group">
-        <label>Classes</label>
-        <div class="checkbox-group">
-            {% for class in classes %}
-            <div class="checkbox-item">
-                <input type="checkbox" id="class_{{ class.class_id }}" name="classes" value="{{ class.class_id }}">
-                <label for="class_{{ class.class_id }}" style="margin: 0;">{{ class.class_name }} ({{ class.level }})</label>
+        <label>Select Classes</label>
+        {% for class in classes %}
+        <div class="class-box">
+            <div class="class-controls">
+                <input type="checkbox" id="class_{{ class.class_id }}" name="class_{{ class.class_id }}" value="yes" onchange="toggleClassOptions({{ class.class_id }})">
+                <label for="class_{{ class.class_id }}" style="flex: 1; margin: 0;">{{ class.class_name }} ({{ class.class_code }})</label>
+                
+                <div id="options_{{ class.class_id }}" style="display: none; flex-wrap: wrap; gap: 15px;">
+                    <div class="radio-group">
+                        <label>Level:</label>
+                        <input type="radio" id="hl_{{ class.class_id }}" name="level_{{ class.class_id }}" value="HL">
+                        <label for="hl_{{ class.class_id }}">HL</label>
+                        <input type="radio" id="sl_{{ class.class_id }}" name="level_{{ class.class_id }}" value="SL">
+                        <label for="sl_{{ class.class_id }}">SL</label>
+                    </div>
+                    
+                    <select name="section_{{ class.class_id }}" style="width: 100px;">
+                        <option value="">Section</option>
+                        <option value=".1">.1</option>
+                        <option value=".2">.2</option>
+                        <option value=".3">.3</option>
+                    </select>
+                </div>
             </div>
-            {% endfor %}
         </div>
+        {% endfor %}
     </div>
 
     <div class="form-group">
@@ -46,10 +63,76 @@
 
     <div class="form-group">
         <label for="notes">Notes</label>
-        <textarea id="notes" name="notes" rows="3" placeholder="Additional notes about accommodations..."></textarea>
+        <textarea id="notes" name="notes" rows="3"></textarea>
     </div>
 
     <button type="submit" class="btn">Add Student</button>
     <a href="/" class="btn" style="background: #6c757d;">Cancel</a>
 </form>
+
+<script>
+function toggleClassOptions(classId) {
+    const checkbox = document.getElementById('class_' + classId);
+    const options = document.getElementById('options_' + classId);
+    options.style.display = checkbox.checked ? 'flex' : 'none';
+}
+</script>
+{% endblock %}
+"""
+
+# templates/view_test.html
+"""
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Test Details</h2>
+
+<div style="background: #e8f4fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <p><strong>Test:</strong> {{ test.test_name if test.test_name else 'Unnamed Test' }}</p>
+    <p><strong>Date:</strong> {{ test.test_date }}</p>
+    <p><strong>Period:</strong> {{ test.period }}</p>
+    <p><strong>Class:</strong> {{ test.class_name }} ({{ test.class_code }})</p>
+    {% if test.notes %}
+    <p><strong>Notes:</strong> {{ test.notes }}</p>
+    {% endif %}
+</div>
+
+{% if warning %}
+<div class="alert alert-warning">{{ warning }}</div>
+{% endif %}
+
+<h3>Affected Students ({{ affected_students|length }})</h3>
+
+{% if affected_students %}
+<table>
+    <thead>
+        <tr>
+            <th>Student Name</th>
+            <th>Grade</th>
+            <th>Section</th>
+            <th>Level</th>
+            <th>Accommodations</th>
+            <th>Time Multiplier</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in affected_students %}
+        <tr>
+            <td>{{ student.student_name }}</td>
+            <td>Grade {{ student.grade }}</td>
+            <td>{{ student.section }}</td>
+            <td>{{ student.level }}</td>
+            <td>{{ student.accommodations }}</td>
+            <td>{{ student.max_time_multiplier }}x</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No students with accommodations are taking this class.</p>
+{% endif %}
+
+<div style="margin-top: 30px;">
+    <a href="/calendar" class="btn">Back to Calendar</a>
+</div>
 {% endblock %}

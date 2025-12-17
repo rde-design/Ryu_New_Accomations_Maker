@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Accommodation Scheduler{% endblock %}</title>
+    <title>Accommodation Scheduler</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -33,7 +33,6 @@
             text-decoration: none;
             margin-right: 20px;
             font-weight: 600;
-            transition: color 0.3s;
         }
         nav a:hover { color: #764ba2; }
         .btn {
@@ -45,12 +44,9 @@
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
-            transition: background 0.3s;
         }
         .btn:hover { background: #764ba2; }
-        .btn-danger {
-            background: #dc3545;
-        }
+        .btn-danger { background: #dc3545; }
         .btn-danger:hover { background: #c82333; }
         .alert {
             padding: 15px;
@@ -61,6 +57,12 @@
             background: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
+        }
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            font-weight: bold;
         }
         table {
             width: 100%;
@@ -106,16 +108,46 @@
             width: auto;
             margin-right: 10px;
         }
+        .class-box {
+            border: 2px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+        }
+        .class-box h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        .class-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .class-controls label {
+            margin: 0;
+            font-weight: normal;
+        }
+        .radio-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .radio-group input[type="radio"] {
+            width: auto;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎓 Student Accommodation Scheduler</h1>
-        <p class="subtitle">CompSci IA Project - Database Management System</p>
+        <p class="subtitle">CompSci IA Project</p>
         
         <nav>
             <a href="/">Home</a>
             <a href="/add_student">Add Student</a>
+            <a href="/manage_classes">Manage Classes</a>
+            <a href="/calendar">📅 Test Calendar</a>
         </nav>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -130,3 +162,4 @@
     </div>
 </body>
 </html>
+"""
