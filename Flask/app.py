@@ -1,7 +1,7 @@
-
 from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
+import calendar
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
@@ -22,6 +22,7 @@ def init_db():
     c.execute('''CREATE TABLE students (
         student_id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_name TEXT NOT NULL,
+        student_email TEXT,
         grade INTEGER NOT NULL CHECK (grade BETWEEN 9 AND 12),
         date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
@@ -66,6 +67,7 @@ def init_db():
         test_date DATE NOT NULL,
         period TEXT CHECK (period IN ('1st', '2nd', '3rd', '4th')),
         class_id INTEGER NOT NULL,
+        section TEXT CHECK (section IN ('.1', '.2', '.3', 'All')),
         test_name TEXT,
         notes TEXT,
         FOREIGN KEY (class_id) REFERENCES classes(class_id) ON DELETE CASCADE
@@ -73,10 +75,10 @@ def init_db():
     
     # Insert accommodations
     accommodations = [
-        ('Extended Time (25%)', '25% additional time', 1.25),
-        ('Extended Time (50%)', '50% additional time', 1.50),
-        ('Computer for Writing', 'Laptop/computer use', 1.00),
-        ('Preferential Seating', 'Designated seating', 1.00)
+        ('Extended Time (25%)', 'Student receives 25% additional time on assessments (e.g., 60 min test → 75 min)', 1.25),
+        ('Extended Time (50%)', 'Student receives 50% additional time on assessments (e.g., 60 min test → 90 min)', 1.50),
+        ('Computer for Writing', 'Student uses computer/laptop for written responses and essays', 1.00),
+        ('Preferential Seating', 'Student sits in front row or designated quiet area of classroom', 1.00)
     ]
     c.executemany('''INSERT INTO accommodation_types 
         (accommodation_name, description, time_multiplier) 
@@ -111,7 +113,7 @@ def index():
     c = conn.cursor()
     
     c.execute('''
-        SELECT s.student_id, s.student_name, s.grade,
+        SELECT s.student_id, s.student_name, s.student_email, s.grade,
                GROUP_CONCAT(DISTINCT c.class_name || ' (' || sc.level || ' ' || sc.section || ')') as classes,
                GROUP_CONCAT(DISTINCT at.accommodation_name) as accommodations
         FROM students s
@@ -133,15 +135,14 @@ def add_student():
     
     if request.method == 'POST':
         name = request.form['name']
+        email = request.form['email']
         grade = request.form['grade']
         accommodation_ids = request.form.getlist('accommodations')
         notes = request.form.get('notes', '')
         
-        # Insert student
-        c.execute('INSERT INTO students (student_name, grade) VALUES (?, ?)', (name, grade))
+        c.execute('INSERT INTO students (student_name, student_email, grade) VALUES (?, ?, ?)', (name, email, grade))
         student_id = c.lastrowid
         
-        # Get all classes and check selections
         today = datetime.now().strftime('%Y-%m-%d')
         c.execute('SELECT class_id FROM classes')
         all_classes = c.fetchall()
@@ -160,7 +161,6 @@ def add_student():
                                 VALUES (?, ?, ?, ?, ?)''',
                              (student_id, class_id, section, level, today))
         
-        # Insert accommodations
         for acc_id in accommodation_ids:
             c.execute('''INSERT INTO student_accommodations 
                         (student_id, accommodation_id, start_date, notes) 
@@ -214,21 +214,71 @@ def delete_class(class_id):
     return redirect(url_for('manage_classes'))
 
 @app.route('/calendar')
-def calendar():
+@app.route('/calendar/<int:year>/<int:month>')
+def calendar_view(year=None, month=None):
+    if year is None or month is None:
+        today = datetime.now()
+        year = today.year
+        month = today.month
+    
     conn = get_db()
     c = conn.cursor()
     
+    first_day = datetime(year, month, 1)
+    if month == 12:
+        last_day = datetime(year + 1, 1, 1) - timedelta(days=1)
+    else:
+        last_day = datetime(year, month + 1, 1) - timedelta(days=1)
+    
     c.execute('''
-        SELECT t.test_id, t.test_date, t.period, t.test_name, t.notes,
+        SELECT t.test_id, t.test_date, t.period, t.test_name, t.section,
                c.class_name, c.class_code
         FROM test_schedule t
         JOIN classes c ON t.class_id = c.class_id
-        ORDER BY t.test_date DESC, t.period
-    ''')
-    tests = c.fetchall()
+        WHERE t.test_date >= ? AND t.test_date <= ?
+        ORDER BY t.test_date, t.period
+    ''', (first_day.strftime('%Y-%m-%d'), last_day.strftime('%Y-%m-%d')))
     
+    tests = c.fetchall()
     conn.close()
-    return render_template('calendar.html', tests=tests)
+    
+    tests_by_date = {}
+    for test in tests:
+        date = test['test_date']
+        if date not in tests_by_date:
+            tests_by_date[date] = []
+        tests_by_date[date].append(test)
+    
+    cal = calendar.monthcalendar(year, month)
+    month_name = calendar.month_name[month]
+    
+    if month == 1:
+        prev_month = 12
+        prev_year = year - 1
+    else:
+        prev_month = month - 1
+        prev_year = year
+    
+    if month == 12:
+        next_month = 1
+        next_year = year + 1
+    else:
+        next_month = month + 1
+        next_year = year
+    
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    
+    return render_template('calendar.html', 
+                         cal=cal, 
+                         year=year, 
+                         month=month, 
+                         month_name=month_name,
+                         tests_by_date=tests_by_date,
+                         prev_year=prev_year,
+                         prev_month=prev_month,
+                         next_year=next_year,
+                         next_month=next_month,
+                         today=today_str)
 
 @app.route('/add_test', methods=['GET', 'POST'])
 def add_test():
@@ -239,17 +289,18 @@ def add_test():
         test_date = request.form['test_date']
         period = request.form['period']
         class_id = request.form['class_id']
+        section = request.form['section']
         test_name = request.form['test_name']
         notes = request.form.get('notes', '')
         
         c.execute('''INSERT INTO test_schedule 
-                    (test_date, period, class_id, test_name, notes) 
-                    VALUES (?, ?, ?, ?, ?)''',
-                 (test_date, period, class_id, test_name, notes))
+                    (test_date, period, class_id, section, test_name, notes) 
+                    VALUES (?, ?, ?, ?, ?, ?)''',
+                 (test_date, period, class_id, section, test_name, notes))
         conn.commit()
         conn.close()
         flash('Test added successfully!', 'success')
-        return redirect(url_for('calendar'))
+        return redirect(url_for('calendar_view'))
     
     c.execute('SELECT * FROM classes ORDER BY class_name')
     classes = c.fetchall()
@@ -262,7 +313,6 @@ def view_test(test_id):
     conn = get_db()
     c = conn.cursor()
     
-    # Get test info
     c.execute('''
         SELECT t.*, c.class_name, c.class_code
         FROM test_schedule t
@@ -273,28 +323,59 @@ def view_test(test_id):
     
     if not test:
         flash('Test not found', 'danger')
-        return redirect(url_for('calendar'))
+        return redirect(url_for('calendar_view'))
     
-    # Get affected students
-    c.execute('''
-        SELECT DISTINCT
-            s.student_id,
-            s.student_name,
-            s.grade,
-            sc.section,
-            sc.level,
-            GROUP_CONCAT(DISTINCT at.accommodation_name, ', ') as accommodations,
-            MAX(at.time_multiplier) as max_time_multiplier
-        FROM students s
-        JOIN student_classes sc ON s.student_id = sc.student_id
-        JOIN student_accommodations sa ON s.student_id = sa.student_id
-        JOIN accommodation_types at ON sa.accommodation_id = at.accommodation_id
-        WHERE sc.class_id = ?
-        GROUP BY s.student_id, sc.section, sc.level
-        ORDER BY sc.section, s.student_name
-    ''', (test['class_id'],))
+    if test['section'] == 'All':
+        c.execute('''
+            SELECT DISTINCT
+                s.student_id,
+                s.student_name,
+                s.student_email,
+                s.grade,
+                sc.section,
+                sc.level,
+                GROUP_CONCAT(DISTINCT at.accommodation_name || '|' || at.description, ';;') as accommodations,
+                MAX(at.time_multiplier) as max_time_multiplier
+            FROM students s
+            JOIN student_classes sc ON s.student_id = sc.student_id
+            JOIN student_accommodations sa ON s.student_id = sa.student_id
+            JOIN accommodation_types at ON sa.accommodation_id = at.accommodation_id
+            WHERE sc.class_id = ?
+            GROUP BY s.student_id, sc.section, sc.level
+            ORDER BY sc.section, s.student_name
+        ''', (test['class_id'],))
+    else:
+        c.execute('''
+            SELECT DISTINCT
+                s.student_id,
+                s.student_name,
+                s.student_email,
+                s.grade,
+                sc.section,
+                sc.level,
+                GROUP_CONCAT(DISTINCT at.accommodation_name || '|' || at.description, ';;') as accommodations,
+                MAX(at.time_multiplier) as max_time_multiplier
+            FROM students s
+            JOIN student_classes sc ON s.student_id = sc.student_id
+            JOIN student_accommodations sa ON s.student_id = sa.student_id
+            JOIN accommodation_types at ON sa.accommodation_id = at.accommodation_id
+            WHERE sc.class_id = ? AND sc.section = ?
+            GROUP BY s.student_id, sc.section, sc.level
+            ORDER BY s.student_name
+        ''', (test['class_id'], test['section']))
     
-    affected_students = c.fetchall()
+    affected_students = []
+    for row in c.fetchall():
+        student_dict = dict(row)
+        if student_dict['accommodations']:
+            acc_list = []
+            for acc in student_dict['accommodations'].split(';;'):
+                parts = acc.split('|')
+                acc_list.append({'name': parts[0], 'description': parts[1] if len(parts) > 1 else ''})
+            student_dict['accommodation_list'] = acc_list
+        else:
+            student_dict['accommodation_list'] = []
+        affected_students.append(student_dict)
     
     warning = None
     if test['period'] == '4th':
@@ -311,7 +392,7 @@ def delete_test(test_id):
     conn.commit()
     conn.close()
     flash('Test deleted successfully!', 'success')
-    return redirect(url_for('calendar'))
+    return redirect(url_for('calendar_view'))
 
 @app.route('/delete_student/<int:student_id>')
 def delete_student(student_id):
@@ -354,3 +435,4 @@ def view_student(student_id):
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
+

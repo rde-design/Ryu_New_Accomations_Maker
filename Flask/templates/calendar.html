@@ -1,41 +1,100 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>📅 Test Calendar</h2>
+<style>
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .calendar-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .calendar-table th {
+        background: #667eea;
+        color: white;
+        padding: 10px;
+        text-align: center;
+    }
+    .calendar-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        vertical-align: top;
+        height: 100px;
+        width: 14.28%;
+    }
+    .calendar-day {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .today {
+        background: #e8f4fd;
+    }
+    .test-item {
+        background: #fff3cd;
+        padding: 3px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+        margin-bottom: 3px;
+        cursor: pointer;
+        border-left: 3px solid #667eea;
+    }
+    .test-item:hover {
+        background: #ffe69c;
+    }
+    .empty-day {
+        color: #ccc;
+    }
+</style>
 
-<div style="margin-bottom: 30px;">
+<div class="calendar-header">
+    <a href="/calendar/{{ prev_year }}/{{ prev_month }}" class="btn">← Previous</a>
+    <h2>{{ month_name }} {{ year }}</h2>
+    <a href="/calendar/{{ next_year }}/{{ next_month }}" class="btn">Next →</a>
+</div>
+
+<div style="margin-bottom: 20px;">
     <a href="/add_test" class="btn">➕ Add New Test</a>
 </div>
 
-<h3>Scheduled Tests</h3>
-
-{% if tests %}
-<table>
+<table class="calendar-table">
     <thead>
         <tr>
-            <th>Date</th>
-            <th>Period</th>
-            <th>Class</th>
-            <th>Test Name</th>
-            <th>Actions</th>
+            <th>Monday</th>
+            <th>Tuesday</th>
+            <th>Wednesday</th>
+            <th>Thursday</th>
+            <th>Friday</th>
+            <th>Saturday</th>
+            <th>Sunday</th>
         </tr>
     </thead>
     <tbody>
-        {% for test in tests %}
+        {% for week in cal %}
         <tr>
-            <td>{{ test.test_date }}</td>
-            <td>{{ test.period }}</td>
-            <td>{{ test.class_name }} ({{ test.class_code }})</td>
-            <td>{{ test.test_name if test.test_name else '-' }}</td>
-            <td>
-                <a href="/view_test/{{ test.test_id }}" class="btn" style="padding: 5px 10px; font-size: 12px;">View Students</a>
-                <a href="/delete_test/{{ test.test_id }}" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('Are you sure?')">Delete</a>
+            {% for day in week %}
+            <td {% if day != 0 %}class="{% if '%04d-%02d-%02d'|format(year, month, day) == today %}today{% endif %}"{% endif %}>
+                {% if day != 0 %}
+                    <div class="calendar-day">{{ day }}</div>
+                    {% set date_str = '%04d-%02d-%02d'|format(year, month, day) %}
+                    {% if date_str in tests_by_date %}
+                        {% for test in tests_by_date[date_str] %}
+                        <div class="test-item" onclick="window.location='/view_test/{{ test.test_id }}'">
+                            <strong>{{ test.period }}</strong> - {{ test.class_code }}{% if test.section != 'All' %} {{ test.section }}{% endif %}
+                            {% if test.test_name %}<br>{{ test.test_name }}{% endif %}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% else %}
+                    <div class="empty-day">&nbsp;</div>
+                {% endif %}
             </td>
+            {% endfor %}
         </tr>
         {% endfor %}
     </tbody>
 </table>
-{% else %}
-<p>No tests scheduled yet. <a href="/add_test">Add the first test!</a></p>
-{% endif %}
 {% endblock %}

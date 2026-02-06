@@ -2,6 +2,7 @@
 
 {% block content %}
 <h2>{{ student.student_name }}</h2>
+<p><strong>Email:</strong> {{ student.student_email }}</p>
 <p><strong>Grade:</strong> {{ student.grade }}</p>
 
 <h3 style="margin-top: 30px; color: #667eea;">Classes</h3>
@@ -13,6 +14,7 @@
             <th>Code</th>
             <th>Subject Area</th>
             <th>Level</th>
+            <th>Section</th>
         </tr>
     </thead>
     <tbody>
@@ -22,6 +24,7 @@
             <td>{{ class.class_code }}</td>
             <td>{{ class.subject_area }}</td>
             <td>{{ class.level }}</td>
+            <td>{{ class.section }}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -38,7 +41,6 @@
             <th>Accommodation</th>
             <th>Description</th>
             <th>Time Multiplier</th>
-            <th>Separate Room</th>
             <th>Start Date</th>
             <th>Notes</th>
         </tr>
@@ -49,7 +51,6 @@
             <td>{{ acc.accommodation_name }}</td>
             <td>{{ acc.description }}</td>
             <td>{{ acc.time_multiplier }}x</td>
-            <td>{{ 'Yes' if acc.requires_separate_room else 'No' }}</td>
             <td>{{ acc.start_date }}</td>
             <td>{{ acc.notes if acc.notes else '-' }}</td>
         </tr>

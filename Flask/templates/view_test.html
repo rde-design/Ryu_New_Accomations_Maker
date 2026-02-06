@@ -4,19 +4,18 @@
 <h2>Test Details</h2>
 
 <div style="background: #e8f4fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-    <p><strong>Test Name:</strong> {{ test.test_name if test.test_name else 'Unnamed Test' }}</p>
+    <p><strong>Test:</strong> {{ test.test_name if test.test_name else 'Unnamed Test' }}</p>
     <p><strong>Date:</strong> {{ test.test_date }}</p>
     <p><strong>Period:</strong> {{ test.period }}</p>
     <p><strong>Class:</strong> {{ test.class_name }} ({{ test.class_code }})</p>
+    <p><strong>Section:</strong> {{ test.section }}</p>
     {% if test.notes %}
     <p><strong>Notes:</strong> {{ test.notes }}</p>
     {% endif %}
 </div>
 
 {% if warning %}
-<div class="alert alert-warning">
-    {{ warning }}
-</div>
+<div class="alert alert-warning">{{ warning }}</div>
 {% endif %}
 
 <h3>Affected Students ({{ affected_students|length }})</h3>
@@ -26,6 +25,7 @@
     <thead>
         <tr>
             <th>Student Name</th>
+            <th>Email</th>
             <th>Grade</th>
             <th>Section</th>
             <th>Level</th>
@@ -37,10 +37,16 @@
         {% for student in affected_students %}
         <tr>
             <td>{{ student.student_name }}</td>
+            <td>{{ student.student_email }}</td>
             <td>Grade {{ student.grade }}</td>
             <td>{{ student.section }}</td>
             <td>{{ student.level }}</td>
-            <td>{{ student.accommodations }}</td>
+            <td>
+                {% for acc in student.accommodation_list %}
+                <strong>{{ acc.name }}</strong><br>
+                <em style="font-size: 12px; color: #666;">{{ acc.description }}</em><br><br>
+                {% endfor %}
+            </td>
             <td>{{ student.max_time_multiplier }}x</td>
         </tr>
         {% endfor %}
@@ -54,14 +60,3 @@
     <a href="/calendar" class="btn">Back to Calendar</a>
 </div>
 {% endblock %}
-"""
-
-# templates/view_student.html - UPDATED
-"""
-{% extends "base.html" %}
-
-{% block content %}
-<h2>{{ student.student_name }}</h2>
-<p><strong>Grade:</strong> {{ student.grade }}</p>
-
-<h3 style="margin-top: 30px; color: #667eea;">

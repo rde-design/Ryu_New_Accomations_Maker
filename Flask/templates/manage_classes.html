@@ -41,7 +41,7 @@
             <td>{{ class.class_code }}</td>
             <td>{{ class.subject_area }}</td>
             <td>
-                <a href="/delete_class/{{ class.class_id }}" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('Are you sure?')">Delete</a>
+                <a href="/delete_class/{{ class.class_id }}" class="btn btn-danger btn-small" onclick="return confirm('Are you sure?')">Delete</a>
             </td>
         </tr>
         {% endfor %}
