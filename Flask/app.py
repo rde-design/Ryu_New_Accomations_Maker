@@ -114,8 +114,8 @@ def index():
     
     c.execute('''
         SELECT s.student_id, s.student_name, s.student_email, s.grade,
-               GROUP_CONCAT(DISTINCT c.class_name || ' (' || sc.level || ' ' || sc.section || ')') as classes,
-               GROUP_CONCAT(DISTINCT at.accommodation_name) as accommodations
+               GROUP_CONCAT(c.class_name || ' (' || sc.level || ' ' || sc.section || ')') as classes,
+               GROUP_CONCAT(at.accommodation_name) as accommodations
         FROM students s
         LEFT JOIN student_classes sc ON s.student_id = sc.student_id
         LEFT JOIN classes c ON sc.class_id = c.class_id
@@ -327,14 +327,14 @@ def view_test(test_id):
     
     if test['section'] == 'All':
         c.execute('''
-            SELECT DISTINCT
+            SELECT 
                 s.student_id,
                 s.student_name,
                 s.student_email,
                 s.grade,
                 sc.section,
                 sc.level,
-                GROUP_CONCAT(DISTINCT at.accommodation_name || '|' || at.description, ';;') as accommodations,
+                GROUP_CONCAT(at.accommodation_name || '|' || at.description, ';;') as accommodations,
                 MAX(at.time_multiplier) as max_time_multiplier
             FROM students s
             JOIN student_classes sc ON s.student_id = sc.student_id
@@ -346,14 +346,14 @@ def view_test(test_id):
         ''', (test['class_id'],))
     else:
         c.execute('''
-            SELECT DISTINCT
+            SELECT 
                 s.student_id,
                 s.student_name,
                 s.student_email,
                 s.grade,
                 sc.section,
                 sc.level,
-                GROUP_CONCAT(DISTINCT at.accommodation_name || '|' || at.description, ';;') as accommodations,
+                GROUP_CONCAT(at.accommodation_name || '|' || at.description, ';;') as accommodations,
                 MAX(at.time_multiplier) as max_time_multiplier
             FROM students s
             JOIN student_classes sc ON s.student_id = sc.student_id
